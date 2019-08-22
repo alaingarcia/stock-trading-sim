@@ -48,7 +48,7 @@ class account():
       self.price_bought = price_bought
       self.time_bought = time_bought
 
-  def __init__(self, cash, risk, stock_list):
+  def __init__(self, cash, risk, stock_list, verbose=False):
       self.cash = cash
       self.starting_cash = cash
       self.risk = risk
@@ -61,7 +61,9 @@ class account():
           self.portfolio[ticker] = []
       self.portfolio_value = 0
       self.account_value = cash
+      self.verbose = verbose
   
+  # uses the dataset_dict to store all the files, along with tech indicators
   def initializeDatasets(self, file_suffix, data_folder='data/'):
     for ticker in self.stock_list:
         df = pd.read_csv(data_folder + ticker + file_suffix, sep=',')
@@ -74,37 +76,48 @@ class account():
       portfolio_value += len(self.portfolio[ticker]) * current_price_dict[ticker]
     return portfolio_value
 
+  # calculates account_value (and updates portfolio value)
   def accountValue(self, current_price_dict):
     self.portfolio_value = self.portfolioValue(current_price_dict)
     account_value = self.cash + self.portfolio_value
     return account_value
-          
-  def buy(self, ticker, current_stock_price, amount_to_buy, time):
+
+  # sell a specific amount of a specific stock at a specific price     
+  def buy(self, ticker, current_stock_price, amount_to_buy, time, verbose=False):
+    
     # first, check if the order is possible
     if (self.cash < amount_to_buy * current_stock_price):
       print('Error: Attempted to buy stocks without enough cash.')
       return
+    
     # inserts a stock object for the amount of stock specified
     for _ in range(amount_to_buy):
       self.portfolio[ticker].insert(0, self.stock(current_stock_price, time))
       self.buy_orders += 1
     self.cash -= amount_to_buy * current_stock_price
     self.cash = round(self.cash, 2)
-    print("{} - BUY {} {} @ ${} ea, cash: {}, account_value: {}".format(time, amount_to_buy, ticker, current_stock_price, self.cash, self.account_value))
 
+    if self.verbose:
+      print("{} - BUY {} {} @ ${} ea, cash: {}, account_value: {}".format(time, amount_to_buy, ticker, current_stock_price, self.cash, self.account_value))
+
+  # sell a specific amount of a specific stock at a specific price  
   def sell(self, ticker, current_stock_price, amount_to_sell, time):
+    
     # first, check if the order is possible
     current_stock_amount = len(self.portfolio[ticker])
     if amount_to_sell > current_stock_amount:
       print('Error: Attempted to sell more stocks than are currently in the portfolio.')
       return
+    
     # sell the amount required
     while len(self.portfolio[ticker]) > current_stock_amount - amount_to_sell:
       self.portfolio[ticker].pop(0)
       self.cash += current_stock_price
       self.sell_orders += 1
     self.cash = round(self.cash, 2)
-    print("{} - SELL {} {} @ ${} ea, cash: {}, account_value: {}".format(time, amount_to_sell, ticker, current_stock_price, self.cash, self.account_value))
+
+    if self.verbose:
+      print("{} - SELL {} {} @ ${} ea, cash: {}, account_value: {}".format(time, amount_to_sell, ticker, current_stock_price, self.cash, self.account_value))
     
   def amount_to_buy(self, current_stock_price, account_value, equity_percent):
     cash_used_to_buy = equity_percent * account_value
