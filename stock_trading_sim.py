@@ -163,12 +163,16 @@ class account():
 
           # ------ TRADING RULES ------
 
+          # Check if amount of cash left is ok with given risk level
+          if (self.cash / self.starting_cash <= self.risk):
+            continue
+
           # Buys
-          if ((rsi < 50) & (sma1>sma2)) or ((rsi > 50) & (sma3>sma4)):
+          elif ((rsi < 50) & (sma1>sma2)) or ((rsi > 50) & (sma3>sma4)):
             self.buy(ticker, current_stock_price, amount_to_buy=1, time=time)
 
           # Sells
-          elif (((rsi > 75) & (sma1<sma2)) or ((rsi < 75) & (sma3<sma4))) & (len(self.portfolio[ticker]) > 0):
+          elif (((rsi > 75) & (sma1<sma2)) or ((rsi < 75) & (sma3<sma4)) or (self.cash < 50000)) & (len(self.portfolio[ticker]) > 0):
             self.sell(ticker, current_stock_price, amount_to_sell=1, time=time)
 
   # Calculates ROI based on technical analysis trading and compares it to buy and hold ROI
